@@ -1,0 +1,22 @@
+
+
+<div id="createModal" class="modal top am-fade" role="dialog" style="display: block;" aria-labelledby="myModalLabel">
+    <div id="modal-dialog">
+        <div id="modal-content">
+            <div id="modal-header">
+                <div class="row pad-left-15 pad-right-14" style="margin-top: 80px;">
+                    <div class="col-md-offset-3 col-md-6 panel-model-head" style="border-bottom: 1px solid #808080; padding: 20px;">
+                        <button type="button" class="close" ng-click="createModal.hide()">&times;</button>
+                        <h4 class="modal-title">Create Modal</h4>
+                    </div>
+                </div>
+            </div>
+            <div id="modal-body">
+                <form class="form-horizontal panel col-md-offset-3 col-md-6 panel-model" ng-submit="createContact()" novalidate>
+                    <ng-include src="'templates/form.html'"></ng-include>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

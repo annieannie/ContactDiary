@@ -1,5 +1,4 @@
 var gulp =  require('gulp');
-var sass = require ('gulp-sass');
 var browserSync = require('browser-sync');
 var reload = browserSync.reload;
 var autoprefixer = require('gulp-autoprefixer');
@@ -16,19 +15,11 @@ var cssmin = require('gulp-cssmin');
 var htmlmin = require('gulp-htmlmin');
 
 var SOURCEPATHS = {
-  sassSource: 'src/scss/*.scss',
-  sassApp: 'src/scss/app.scss',
-  htmlSource: 'src/*.html',
-  htmlPartialSource: 'src/partial/*.html',
-  jsSource: 'src/js/**',
-  imgSource: 'src/img/**'
-};
-var APPPATH = {
-  root: 'app/',
-  css: 'app/css',
-  js: 'app/js',
-  fonts: 'app/fonts',
-  img: 'app/img'
+  cssApp: 'src/*.css',
+  maincssApp: 'src/main.css',
+  htmlSource: 'src/index.html',
+  jsSource: 'src/main.js',
+  tempFolder: 'src/templates/*.html'
 };
 
 var DOCPATH = {
@@ -36,84 +27,43 @@ var DOCPATH = {
   css: 'docs/css',
   js: 'docs/js',
   fonts: 'docs/fonts',
-  img: 'docs/img'
+  img: 'docs/img',
+  tempFolder: 'docs/templates'
 }
-
-gulp.task('clean-html', function(){
-  return gulp.src(APPPATH.root + '/*.html', {read: false, force: true})
-  .pipe(clean());
-});
-
-gulp.task('clean-scripts', function(){
-  return gulp.src(APPPATH.js + '/*.js', {read: false, force: true})
-  .pipe(clean());
-});
-
-gulp.task('sass', function () {
-
-  var sassFiles = gulp.src(SOURCEPATHS.sassApp)
-  .pipe(autoprefixer())
-  .pipe(sass({outputstyle: 'expanded'}).on('error', sass.logError))
-    .pipe(concat( 'app.css'))
-    .pipe(gulp.dest(APPPATH.css));
-});
-
-gulp.task('images', function () {
-  return gulp.src(SOURCEPATHS.imgSource)
-  .pipe(newer(APPPATH.img))
-  .pipe(imagemin())
-  .pipe(gulp.dest(APPPATH.img));
-});
-
-gulp.task('scripts',['clean-scripts'], function () {
-  gulp.src(SOURCEPATHS.jsSource)
-    .pipe(concat('main.js'))
-    .pipe(browserify())
-    .pipe(gulp.dest(APPPATH.js));
-});
 
 /** start of PRODUCTION TASKS **/
 gulp.task('compress', function () {
-  gulp.src(SOURCEPATHS.jsSource)
-    .pipe(concat('main.js'))
-    .pipe(browserify())
-    .pipe(minify())
+  var ngInfiniteScroll = gulp.src('./node_modules/ng-infinite-scroll/build/ng-infinite-scroll.min.js');
+  var jsFiles = gulp.src(SOURCEPATHS.jsSource)
+  return merge(jsFiles ,ngInfiniteScroll)
+    .pipe(concat( 'app.js'))
     .pipe(gulp.dest(DOCPATH.js));
 });
 
 gulp.task('compresscss', function () {
-  var sassFiles = gulp.src(SOURCEPATHS.sassApp)
-  .pipe(autoprefixer())
-  .pipe(sass({outputstyle: 'expanded'}).on('error', sass.logError))
+  var bootStrapCss = gulp.src('./node_modules/bootStrap/dist/css/bootstrap.css');
+  var sassFiles = gulp.src(SOURCEPATHS.cssApp)
+  return merge(sassFiles, bootStrapCss)
     .pipe(concat( 'app.css'))
     .pipe(cssmin())
     .pipe(rename({suffix: '.min'}))
     .pipe(gulp.dest(DOCPATH.css));
 });
 
-gulp.task('minifyHtml', function () {
+gulp.task('minifyHtml', ['teplates'], function () {
   return gulp.src(SOURCEPATHS.htmlSource)
- .pipe(injectPartials())
  .pipe(htmlmin({collapseWhitespace: true}))
   .pipe(gulp.dest(DOCPATH.root));
 });
 
-gulp.task('imagesmin', function () {
-  return gulp.src(SOURCEPATHS.imgSource)
-  .pipe(newer(DOCPATH.img))
-  .pipe(imagemin())
-  .pipe(gulp.dest(DOCPATH.img));
-});
+gulp.task('teplates', function(){
+  return gulp.src(SOURCEPATHS.tempFolder)
+  .pipe(gulp.dest(DOCPATH.root));
+})
 
 /** End of PRODUCTION TASKS **/
 
- gulp.task('html', ['clean-html'], function () {
-   return gulp.src(SOURCEPATHS.htmlSource)
-  .pipe(injectPartials())
-   .pipe(gulp.dest(APPPATH.root));
- });
-
-gulp.task('serve', ['sass'], function () {
+gulp.task('serve', function () {
   browserSync.init([DOCPATH.css + '/*.css', DOCPATH.root + '/*.html', DOCPATH.js + '/*.js'], {
     server: {
       baseDir: DOCPATH.root
@@ -121,21 +71,4 @@ gulp.task('serve', ['sass'], function () {
   })
 });
 
-gulp.task('serve1', ['sass'], function () {
-  browserSync.init([APPPATH.css + '/*.css', APPPATH.root + '/*.html', APPPATH.js + '/*.js'], {
-    server: {
-      baseDir: APPPATH.root
-    }
-  })
-});
-
-
-gulp.task('watch', ['serve1', 'sass', 'clean-html','html', 'clean-scripts', 'scripts', 'images'], function(){
-  gulp.watch([SOURCEPATHS.sassSource], ['sass']);
-  gulp.watch([SOURCEPATHS.jsSource], ['scripts']);
-  gulp.watch([SOURCEPATHS.htmlSource, SOURCEPATHS.htmlPartialSource], ['html']);
-});
-
-gulp.task('default', ['watch']);
-
-gulp.task('production', [ 'serve', 'compresscss', 'minifyHtml', 'compress','imagesmin']);
+gulp.task('production', [ 'serve', 'compresscss', 'minifyHtml', 'compress']);
